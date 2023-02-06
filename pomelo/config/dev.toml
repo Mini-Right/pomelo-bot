@@ -1,0 +1,14 @@
+[DB]
+[DB.POMELO]
+host = ""
+port = 3306
+user = ""
+password = ""
+database = ""
+
+[REDIS]
+[REDIS.POMELO]
+host = ''
+port = 6379
+password = ''
+db = 0
