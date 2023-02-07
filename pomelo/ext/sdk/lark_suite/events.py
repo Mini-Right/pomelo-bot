@@ -47,7 +47,7 @@ class LarkSuiteEventsServices(object):
 
     def im_message_receive_v1(self):
         """接收消息"""
-        LarkSuiteEventImMessageReceiveServices(event_data=self.event).main()
+        LarkSuiteEventImMessageReceiveServices(app_id=self.app_id, event_data=self.event).main()
 
     def im_message_reaction_created_v1(self):
         """消息被reaction"""
@@ -63,8 +63,11 @@ class LarkSuiteEventsServices(object):
 
     def main(self):
         event_func_name = self.event_type.replace('.', '_')
-        event_func = getattr(self, event_func_name)
-        event_func()
+        try:
+            event_func = getattr(self, event_func_name)
+            event_func()
+        except Exception as e:
+            logger.warning(f"事件: {self.event_type} 未定义: {e}")
 
 
 class LarkSuiteEventImMessageReceiveServices(object):
@@ -89,7 +92,8 @@ class LarkSuiteEventImMessageReceiveServices(object):
     def text(self):
         text = self.content.get('text')
         logger.info(f"[接收消息-text] 发送人: {self.message_id} 群组类型: {self.chat_type} 发送内容: {text}")
-        LarkSuiteIMAPI(app_id=self.app_id, app_secret=self.bot_config.get('app_secret')).message_create(receive_id=self.open_id, msg_type='text', content='')
+        content = {'text': f"你刚才说: {text}"}
+        LarkSuiteIMAPI(app_id=self.app_id, app_secret=self.bot_config.get('app_secret')).message_create(receive_id=self.open_id, msg_type='text', content=json.dumps(content))
 
     def image(self):
         image_key = self.content.get('image_key')

@@ -6,20 +6,19 @@
 # @File        : __init__.py.py
 # @Software    : PyCharm
 # @Description :
-from fastapi import APIRouter, Request, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks
 
-from pomelo.apps.public.routers import public
+from pomelo.cache.bot_app import bot_config
 from pomelo.ext.sdk.lark_suite.events import LarkSuiteEventsServices
 from pomelo.utils.decrypt import decrypt_data
 
 event = APIRouter()
 
 
-@event.post('')
-async def callback_event_handler(data: dict, request: Request, background_tasks: BackgroundTasks):
-    app_id = request.url.path.split('/')[-1]
-    bot_config = request.state.bot_config[app_id]
-    data = decrypt_data(encrypt_key=bot_config.get('encrypt_key'), data=data)
+@event.post('/{app_id}/callback', name='事件回调')
+async def callback_event_handler(app_id: str, data: dict, background_tasks: BackgroundTasks):
+    bot_info = bot_config(bot_id=app_id)
+    data = decrypt_data(encrypt_key=bot_info.get('encrypt_key'), data=data)
     if data.get("type") == "url_verification":
         return {'challenge': data.get("challenge")}
     background_tasks.add_task(LarkSuiteEventsServices(data).main)

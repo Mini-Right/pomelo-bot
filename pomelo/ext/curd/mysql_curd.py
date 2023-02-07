@@ -53,8 +53,6 @@ def lower(func: T) -> T:
 def count(func: T) -> T:
     @wraps
     def wrapper(self, *args, **kwargs):
-        print(args)
-        print(kwargs)
         is_count = kwargs.get('is_count')
         result_list = func(self, *args, **kwargs)
         if not is_count:
