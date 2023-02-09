@@ -11,6 +11,7 @@ import json
 from pomelo.cache.bot_app import bot_config
 from pomelo.ext import logging
 from pomelo.ext.sdk.lark_suite.im import LarkSuiteIMAPI
+from pomelo.ext.sdk.chatgpt import chatgpt
 
 logger = logging.getLogger(__name__)
 
@@ -90,10 +91,29 @@ class LarkSuiteEventImMessageReceiveServices(object):
         self.content: dict = json.loads(self.message.get('content'))
 
     def text(self):
-        text = self.content.get('text')
+        text: str = self.content.get('text')
         logger.info(f"[接收消息-text] 发送人: {self.message_id} 群组类型: {self.chat_type} 发送内容: {text}")
-        content = {'text': f"你刚才说: {text}"}
-        LarkSuiteIMAPI(app_id=self.app_id, app_secret=self.bot_config.get('app_secret')).message_create(receive_id=self.open_id, msg_type='text', content=json.dumps(content))
+        receive_id = self.chat_id if self.chat_type == 'group' else self.open_id
+        receive_id_type = 'chat_id' if self.chat_type == 'group' else 'open_id'
+        if text.startswith('小右'):
+            try:
+                result = chatgpt(text.replace('小右', ''))
+            except Exception as e:
+                logger.warning(f"对话出错啦: {e}")
+                result = '对话出错啦 请稍候再试~~~😭'
+            content = {
+                "config": {
+                    "wide_screen_mode": True
+                },
+                "elements": [
+                    {
+                        "tag": "markdown",
+                        "content": f"""<at id="{self.open_id}""></at> \n**提问**: {text}\n**回答**: \n{result}"""
+                    }
+                ]
+            }
+            LarkSuiteIMAPI(app_id=self.app_id, app_secret=self.bot_config.get('app_secret')).message_create(receive_id=receive_id, msg_type='interactive', content=json.dumps(content), receive_id_type=receive_id_type)
+            LarkSuiteIMAPI(app_id=self.app_id, app_secret=self.bot_config.get('app_secret')).message_reactions(message_id=self.message_id, emoji_type='OK')
 
     def image(self):
         image_key = self.content.get('image_key')

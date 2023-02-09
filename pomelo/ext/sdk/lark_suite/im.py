@@ -106,6 +106,22 @@ class LarkSuiteIMAPI(LarkSuiteBaseAPI):
         response = self.invoke_api(url=url, method='DELETE')
         return response.json().get('code')
 
+    def message_reactions(self, message_id: str, emoji_type: str = 'emoji_type'):
+        """
+        添加消息表情回复 reactions
+        :param message_id:  消息id
+        :param emoji_type:  表情类型
+        :return:
+        """
+        url = self.domain + f'/open-apis/im/v1/messages/{message_id}/reactions'
+        body = {
+            "reaction_type": {
+                "emoji_type": emoji_type
+            }
+        }
+        response = self.invoke_api(url=url, method='POST', body=body)
+        return response.json().get('code')
+
     def message_create(self, receive_id: str, msg_type: str, content: str, receive_id_type: str = 'open_id', uuid: str = None):
         """
         发送消息
