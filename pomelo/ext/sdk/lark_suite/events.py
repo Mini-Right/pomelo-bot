@@ -12,7 +12,7 @@ from pomelo.cache.bot_app import bot_config
 from pomelo.ext import logging
 from pomelo.ext.sdk.lark_suite.im import LarkSuiteIMAPI
 from pomelo.ext.sdk.chatgpt import chatgpt
-
+from pomelo.ext.session import RedisSession
 logger = logging.getLogger(__name__)
 
 
@@ -132,5 +132,9 @@ class LarkSuiteEventImMessageReceiveServices(object):
         logger.info(f"[接收消息-sticker] 发送人: {self.message_id} 群组类型: {self.chat_type} 发送内容: {file_key}")
 
     def main(self):
+        if RedisSession.pomelo.exists(f"message_id:{self.message_id}"):
+            logger.info(f"消息: {self.message_id} 已处理")
+            return
         message_type_func = getattr(self, self.message_type)
         message_type_func()
+        RedisSession.pomelo.set(name=f"message_id:{self.message_id}", value=self.message_id, ex=60 * 60 * 24 * 2)
